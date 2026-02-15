@@ -1,10 +1,10 @@
-# Anthropic Vertex TypeScript API Library
+# <img src=".github/logo.svg" alt="" width="32"> Claude SDK for Google Vertex
 
-[![NPM version](https://img.shields.io/npm/v/@anthropic-ai/vertex-sdk.svg)](https://npmjs.org/package/@anthropic-ai/vertex-sdk)
+[![NPM version](https://img.shields.io/npm/v/@anthropic-ai/vertex-sdk.svg?color=blue)](https://npmjs.org/package/@anthropic-ai/vertex-sdk)
 
-This library provides convenient access to the Anthropic Vertex API.
+This library provides convenient access to the Claude API via Google Vertex AI. See the [documentation](https://platform.claude.com/docs/en/build-with-claude/claude-on-vertex-ai) for more details.
 
-For the non-Vertex Anthropic API at api.anthropic.com, see [`@anthropic-ai/sdk`](https://github.com/anthropics/anthropic-sdk-typescript).
+For the direct Claude API at api.anthropic.com, see [`@anthropic-ai/sdk`](https://github.com/anthropics/anthropic-sdk-typescript).
 
 ## Installation
 
@@ -30,7 +30,7 @@ async function main() {
         content: 'Hey Claude!',
       },
     ],
-    model: 'claude-3-sonnet@20240229',
+    model: 'claude-3-5-sonnet-v2@20241022',
     max_tokens: 300,
   });
   console.log(JSON.stringify(result, null, 2));
@@ -39,7 +39,67 @@ async function main() {
 main();
 ```
 
-For more details on how to use the SDK, see the [README.md for the main Anthropic SDK](https://github.com/anthropics/anthropic-sdk-typescript/tree/main#anthropic-typescript-api-library) which this library extends.
+For more details on how to use the SDK, see the [README.md for the main Claude SDK](https://github.com/anthropics/anthropic-sdk-typescript/tree/main#readme) which this library extends.
+
+## Authentication
+
+This library supports multiple authentication methods:
+
+### Default authentication
+
+The client automatically uses the default [Google Cloud authentication flow](https://cloud.google.com/docs/authentication):
+
+```js
+import { AnthropicVertex } from '@anthropic-ai/vertex-sdk';
+
+// Uses default authentication and environment variables
+const client = new AnthropicVertex({
+  region: 'us-central1',
+  projectId: 'my-project-id',
+});
+```
+
+### Custom GoogleAuth configuration
+
+You can customize the authentication using the `googleAuth` option:
+
+```js
+import { AnthropicVertex } from '@anthropic-ai/vertex-sdk';
+import { GoogleAuth } from 'google-auth-library';
+
+const client = new AnthropicVertex({
+  googleAuth: new GoogleAuth({
+    scopes: 'https://www.googleapis.com/auth/cloud-platform',
+    keyFile: '/path/to/service-account.json',
+  }),
+  region: 'us-central1',
+  projectId: 'my-project-id',
+});
+```
+
+### Pre-configured AuthClient
+
+For advanced use cases [like impersonation](https://cloud.google.com/docs/authentication/use-service-account-impersonation), you can provide a pre-configured `AuthClient`:
+
+```js
+import { AnthropicVertex } from '@anthropic-ai/vertex-sdk';
+import { GoogleAuth, Impersonated } from 'google-auth-library';
+
+// Create an impersonated credential
+const authClient = new Impersonated({
+  sourceClient: await new GoogleAuth().getClient(),
+  targetPrincipal: 'impersonated-account@projectID.iam.gserviceaccount.com',
+  lifetime: 30,
+  delegates: [],
+  targetScopes: ['https://www.googleapis.com/auth/cloud-platform'],
+});
+
+const client = new AnthropicVertex({
+  authClient,
+  region: 'us-central1',
+  projectId: 'my-project-id',
+});
+```
 
 ## Requirements
 
